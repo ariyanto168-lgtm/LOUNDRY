@@ -44,30 +44,31 @@
         <!-- MAIN CONTENT -->
         <main class="flex-1 p-4 space-y-4 overflow-y-auto">
 
-            <!-- TAB 1: KASIR + DASHBOARD KARTU -->
+            <!-- TAB 1: KASIR & DASHBOARD KARTU UTAMA -->
             <section id="sec-kasir" class="tab-section space-y-4">
-                <!-- DASHBOARD KARTU LENGKAP DI HALAMAN UTAMA KASIR -->
+                
+                <!-- DASHBOARD KARTU RINGKASAN LENGKAP -->
                 <div class="grid grid-cols-2 gap-2.5">
-                    <div class="bg-zinc-900 border border-zinc-800 p-3 rounded-2xl space-y-1">
-                        <span class="text-[10px] text-zinc-400 block">Pendapatan Harian</span>
-                        <h3 id="dash-rev" class="text-base font-bold text-white">Rp 0</h3>
+                    <div class="bg-zinc-900/90 border border-zinc-800 p-3.5 rounded-2xl space-y-1 shadow-md">
+                        <span class="text-[10px] text-zinc-400 block font-medium">💰 Pendapatan Harian</span>
+                        <h3 id="dash-rev" class="text-base font-bold text-white tracking-tight">Rp 0</h3>
                     </div>
-                    <div class="bg-zinc-900 border border-zinc-800 p-3 rounded-2xl space-y-1">
-                        <span class="text-[10px] text-zinc-400 block">Estimasi Laba</span>
-                        <h3 id="dash-profit" class="text-base font-bold text-emerald-400">Rp 0</h3>
+                    <div class="bg-zinc-900/90 border border-zinc-800 p-3.5 rounded-2xl space-y-1 shadow-md">
+                        <span class="text-[10px] text-zinc-400 block font-medium">📈 Estimasi Laba</span>
+                        <h3 id="dash-profit" class="text-base font-bold text-emerald-400 tracking-tight">Rp 0</h3>
                     </div>
-                    <div class="bg-zinc-900 border border-zinc-800 p-3 rounded-2xl space-y-1">
-                        <span class="text-[10px] text-zinc-400 block">Total Pengeluaran</span>
-                        <h3 id="dash-exp" class="text-base font-bold text-rose-400">Rp 0</h3>
+                    <div class="bg-zinc-900/90 border border-zinc-800 p-3.5 rounded-2xl space-y-1 shadow-md">
+                        <span class="text-[10px] text-zinc-400 block font-medium">💸 Total Pengeluaran</span>
+                        <h3 id="dash-exp" class="text-base font-bold text-rose-400 tracking-tight">Rp 0</h3>
                     </div>
-                    <div class="bg-zinc-900 border border-zinc-800 p-3 rounded-2xl space-y-1">
-                        <span class="text-[10px] text-zinc-400 block">Total Order</span>
-                        <h3 id="dash-count" class="text-base font-bold text-sky-400">0 Pesanan</h3>
+                    <div class="bg-zinc-900/90 border border-zinc-800 p-3.5 rounded-2xl space-y-1 shadow-md">
+                        <span class="text-[10px] text-zinc-400 block font-medium">📋 Total Order</span>
+                        <h3 id="dash-count" class="text-base font-bold text-sky-400 tracking-tight">0 Pesanan</h3>
                     </div>
                 </div>
 
-                <!-- FORM INPUT KASIR -->
-                <form onsubmit="addOrder(event)" class="bg-zinc-900 p-4 rounded-2xl border border-zinc-800 space-y-3">
+                <!-- FORM INPUT PESANAN -->
+                <form onsubmit="addOrder(event)" class="bg-zinc-900 p-4 rounded-2xl border border-zinc-800 space-y-3 shadow-lg">
                     <span class="text-xs font-bold text-sky-400 block">➕ Input Pesanan Baru</span>
                     
                     <div class="space-y-2 text-xs">
@@ -118,7 +119,7 @@
                 </form>
             </section>
 
-            <!-- TAB 2: PESANAN -->
+            <!-- TAB 2: DAFTAR PESANAN -->
             <section id="sec-pesanan" class="tab-section hidden space-y-4">
                 <div class="flex justify-between items-center px-1">
                     <span class="text-xs font-bold text-zinc-300">Daftar Cucian Masuk</span>
@@ -148,7 +149,7 @@
 
             <!-- FOOTER BRANDING -->
             <footer class="text-center pt-4 pb-2 space-y-1">
-                <p class="text-[10px] text-zinc-500">POS Laundry Pro <span class="font-mono text-zinc-400">v1.4.0</span></p>
+                <p class="text-[10px] text-zinc-500">POS Laundry Pro <span class="font-mono text-zinc-400">v1.5.0</span></p>
                 <p class="text-[11px] font-semibold tracking-wider text-sky-500/80">Powered by Ari GPM</p>
             </footer>
 
