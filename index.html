@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kasir Laundry Digital - Cloud POS</title>
-    <!-- Tailwind CSS CDN -->
+    <title>Kasir Laundry Digital - POS Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
@@ -15,6 +14,11 @@
             user-select: none;
         }
         ::-webkit-scrollbar { display: none; }
+        @media print {
+            body * { visibility: hidden; }
+            #print-area, #print-area * { visibility: visible; }
+            #print-area { position: absolute; left: 0; top: 0; width: 100%; background: white; color: black; }
+        }
     </style>
 </head>
 <body class="antialiased selection:bg-sky-600 selection:text-white">
@@ -27,7 +31,6 @@
                 <span class="text-[10px] uppercase tracking-widest text-sky-400 font-bold block">POS Laundry Digital</span>
                 <h1 id="header-laundry-name" class="text-lg font-bold text-white">Laundry Express</h1>
             </div>
-            <!-- STATUS KONEKSI -->
             <div id="connection-badge" class="text-[10px] px-2.5 py-1 rounded-full font-semibold bg-emerald-950 text-emerald-400 border border-emerald-500/30">
                 🟢 Online
             </div>
@@ -41,7 +44,7 @@
         <!-- MAIN CONTENT -->
         <main class="flex-1 p-4 space-y-4 overflow-y-auto">
 
-            <!-- TAB 1: KASIR / INPUT ORDER -->
+            <!-- TAB 1: KASIR -->
             <section id="sec-kasir" class="tab-section space-y-4">
                 <form onsubmit="addOrder(event)" class="bg-zinc-900 p-4 rounded-2xl border border-zinc-800 space-y-3">
                     <span class="text-xs font-bold text-sky-400 block">➕ Input Pesanan Baru</span>
@@ -52,7 +55,11 @@
                             <input type="text" id="order-customer" placeholder="Cth: Bpk. Budi" required class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-sky-500">
                         </div>
                         <div>
-                            <label class="block text-zinc-400 mb-1">Jenis Layanan & Harga per Satuan:</label>
+                            <label class="block text-zinc-400 mb-1">No. WhatsApp Pelanggan (Awali 62):</label>
+                            <input type="text" id="order-phone" placeholder="Cth: 628123456789" required class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-sky-500">
+                        </div>
+                        <div>
+                            <label class="block text-zinc-400 mb-1">Jenis Layanan & Harga:</label>
                             <select id="order-service" onchange="calculateTotal()" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-sky-500">
                                 <option value="Cuci Kiloan (Rp 6.000/kg)" data-price="6000">Cuci Kiloan (Rp 6.000 / kg)</option>
                                 <option value="Cuci + Setrika (Rp 8.000/kg)" data-price="8000">Cuci + Setrika (Rp 8.000 / kg)</option>
@@ -71,47 +78,69 @@
                                 <option value="Belum Lunas">Belum Lunas (Bayar Nanti)</option>
                             </select>
                         </div>
-                        <div class="bg-zinc-950 p-3 rounded-xl border border-zinc-800 flex justify-between items-baseline">
-                            <span class="text-zinc-400">Total Harga:</span>
-                            <span id="order-total-preview" class="text-base font-bold text-sky-400">Rp 6.000</span>
+                        <div class="bg-zinc-950 p-3 rounded-xl border border-zinc-800 space-y-2">
+                            <div class="flex justify-between items-baseline">
+                                <span class="text-zinc-400">Total Harga:</span>
+                                <span id="order-total-preview" class="text-base font-bold text-sky-400">Rp 6.000</span>
+                            </div>
+                            <div>
+                                <label class="block text-zinc-400 mb-1">Uang Diterima (Tunai):</label>
+                                <input type="number" id="order-cash" value="6000" oninput="calculateChange()" class="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-2 py-1.5 text-white font-mono">
+                            </div>
+                            <div class="flex justify-between items-baseline pt-1 border-t border-zinc-800/80">
+                                <span class="text-zinc-400">Kembalian:</span>
+                                <span id="order-change-preview" class="text-sm font-bold text-emerald-400">Rp 0</span>
+                            </div>
                         </div>
                     </div>
-                    <button type="submit" class="w-full py-2.5 bg-sky-700 hover:bg-sky-600 text-white font-semibold text-xs rounded-xl transition shadow">Simpan & Buat Pesanan</button>
+                    <button type="submit" class="w-full py-2.5 bg-sky-700 hover:bg-sky-600 text-white font-semibold text-xs rounded-xl transition shadow">Simpan & Buat Nota</button>
                 </form>
             </section>
 
-            <!-- TAB 2: DAFTAR PESANAN & STATUS -->
+            <!-- TAB 2: PESANAN -->
             <section id="sec-pesanan" class="tab-section hidden space-y-4">
                 <div class="flex justify-between items-center px-1">
                     <span class="text-xs font-bold text-zinc-300">Daftar Cucian Masuk</span>
                     <span id="order-count-badge" class="text-[10px] bg-zinc-800 text-zinc-300 px-2 py-0.5 rounded-full">0 Order</span>
                 </div>
-                <div id="orders-list-container" class="space-y-2">
-                    <!-- Rendered via JS -->
-                </div>
+                <div id="orders-list-container" class="space-y-2"></div>
             </section>
 
-            <!-- TAB 3: LAPORAN KEUANGAN -->
+            <!-- TAB 3: DASHBOARD KARTU & LAPORAN -->
             <section id="sec-laporan" class="tab-section hidden space-y-4">
-                <div class="bg-gradient-to-br from-sky-900/60 via-zinc-900 to-zinc-900 border border-sky-500/30 p-5 rounded-3xl shadow-xl space-y-3">
-                    <span class="text-xs text-sky-300 font-medium block">Total Pendapatan Laundry</span>
-                    <h2 id="lap-total-pendapatan" class="text-3xl font-extrabold text-white tracking-tight">Rp 0</h2>
-                    <div class="grid grid-cols-2 gap-2 pt-2 border-t border-zinc-800 text-xs">
-                        <div>
-                            <span class="text-zinc-400 block text-[10px]">Total Order</span>
-                            <span id="lap-total-order" class="font-bold text-white text-sm">0 Pesanan</span>
-                        </div>
-                        <div>
-                            <span class="text-zinc-400 block text-[10px]">Lunas / Belum</span>
-                            <span id="lap-status-bayar" class="font-bold text-sky-400 text-sm">-</span>
-                        </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="bg-zinc-900 border border-zinc-800 p-3.5 rounded-2xl space-y-1">
+                        <span class="text-[10px] text-zinc-400 block">Pendapatan Harian</span>
+                        <h3 id="dash-rev" class="text-lg font-bold text-white">Rp 0</h3>
+                    </div>
+                    <div class="bg-zinc-900 border border-zinc-800 p-3.5 rounded-2xl space-y-1">
+                        <span class="text-[10px] text-zinc-400 block">Estimasi Laba</span>
+                        <h3 id="dash-profit" class="text-lg font-bold text-emerald-400">Rp 0</h3>
+                    </div>
+                    <div class="bg-zinc-900 border border-zinc-800 p-3.5 rounded-2xl space-y-1">
+                        <span class="text-[10px] text-zinc-400 block">Total Pengeluaran</span>
+                        <h3 id="dash-exp" class="text-lg font-bold text-rose-400">Rp 0</h3>
+                    </div>
+                    <div class="bg-zinc-900 border border-zinc-800 p-3.5 rounded-2xl space-y-1">
+                        <span class="text-[10px] text-zinc-400 block">Total Order</span>
+                        <h3 id="dash-count" class="text-lg font-bold text-sky-400">0 Pesanan</h3>
                     </div>
                 </div>
+
+                <!-- Input Pengeluaran -->
+                <div class="bg-zinc-900 p-4 rounded-2xl border border-zinc-800 space-y-3">
+                    <span class="text-xs font-bold text-rose-400 block">💸 Catat Pengeluaran Operasional</span>
+                    <form onsubmit="addExpense(event)" class="space-y-2 text-xs">
+                        <input type="text" id="exp-desc" placeholder="Cth: Beli Deterjen / Listrik" required class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-white">
+                        <input type="number" id="exp-amount" placeholder="Jumlah Nominal (Rp)" required class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-white">
+                        <button type="submit" class="w-full py-2 bg-rose-700/80 hover:bg-rose-700 text-white font-semibold rounded-xl transition">Simpan Pengeluaran</button>
+                    </form>
+                </div>
             </section>
 
-            <!-- FOOTER INFO & BRANDING -->
-            <footer class="text-center pt-6 pb-2 space-y-1">
-                <p class="text-[10px] text-zinc-500">Kasir Laundry Digital <span id="app-version" class="font-mono text-zinc-400">v1.2.0</span></p>
+            <!-- FOOTER BRANDING -->
+            <footer class="text-center pt-4 pb-2 space-y-1">
+                <p class="text-[10px] text-zinc-500">POS Laundry Pro <span class="font-mono text-zinc-400">v1.3.0</span></p>
                 <p class="text-[11px] font-semibold tracking-wider text-sky-500/80">Powered by Ari GPM</p>
             </footer>
 
@@ -137,14 +166,57 @@
             </button>
         </nav>
 
+        <!-- MODAL PREVIEW NOTA -->
+        <div id="receipt-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+            <div class="bg-zinc-900 border border-zinc-800 rounded-3xl p-5 max-w-xs w-full space-y-3 shadow-2xl text-white">
+                <div class="flex justify-between items-center border-b border-zinc-800 pb-2">
+                    <h2 class="text-xs font-bold text-sky-400">📄 Pratinjau Nota</h2>
+                    <button onclick="closeReceiptModal()" class="text-zinc-400 hover:text-white font-bold">✕</button>
+                </div>
+                
+                <!-- KOTAK NOTA CETAK -->
+                <div id="print-area" class="bg-white text-zinc-900 p-4 rounded-xl text-[11px] font-mono space-y-2 shadow-inner">
+                    <div class="text-center border-b border-dashed border-zinc-400 pb-2">
+                        <p id="receipt-store" class="font-bold text-sm">Laundry Express</p>
+                        <p id="receipt-address" class="text-[10px] text-zinc-600">Alamat Usaha Anda</p>
+                        <p id="receipt-phone" class="text-[10px] text-zinc-600">Telp: -</p>
+                    </div>
+                    <div class="space-y-0.5 text-[10px]">
+                        <p>ID: <span id="r-id">-</span></p>
+                        <p>Tgl: <span id="r-date">-</span></p>
+                        <p>Pelanggan: <span id="r-cust">-</span></p>
+                    </div>
+                    <div class="border-t border-dashed border-zinc-400 pt-2 space-y-1">
+                        <div class="flex justify-between font-bold">
+                            <span id="r-serv">-</span>
+                            <span id="r-total">-</span>
+                        </div>
+                        <div class="flex justify-between text-[10px] text-zinc-600">
+                            <span>Bayar: <span id="r-paystatus">-</span></span>
+                            <span>Kembalian: <span id="r-change">Rp 0</span></span>
+                        </div>
+                    </div>
+                    <div class="border-t border-dashed border-zinc-400 pt-2 text-center text-[9px] text-zinc-500">
+                        <p id="receipt-footer">Terima Kasih Telah Menggunakan Jasa Kami</p>
+                    </div>
+                </div>
+
+                <!-- TOMBOL AKSI NOTA -->
+                <div class="grid grid-cols-2 gap-2 pt-1">
+                    <button onclick="window.print()" class="py-2 bg-zinc-800 hover:bg-zinc-700 text-xs font-semibold rounded-xl transition text-center">🖨️ Cetak</button>
+                    <button onclick="sendWhatsAppNote()" class="py-2 bg-emerald-700 hover:bg-emerald-600 text-xs font-semibold rounded-xl transition text-center">💬 Kirim WA</button>
+                </div>
+            </div>
+        </div>
+
         <!-- MODAL SETTINGS -->
         <div id="settings-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-6">
-            <div class="bg-zinc-900 border border-zinc-800 rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-2xl text-white">
-                <div class="flex justify-between items-center border-b border-zinc-800 pb-3">
-                    <h2 class="text-sm font-bold text-sky-400">⚙️ Pengaturan Kasir</h2>
+            <div class="bg-zinc-900 border border-zinc-800 rounded-3xl p-5 max-w-sm w-full space-y-3 shadow-2xl text-white">
+                <div class="flex justify-between items-center border-b border-zinc-800 pb-2">
+                    <h2 class="text-xs font-bold text-sky-400">⚙️ Pengaturan & Nota</h2>
                     <button onclick="toggleSettingsModal()" class="text-zinc-400 hover:text-white font-bold">✕</button>
                 </div>
-                <div class="space-y-3 text-xs">
+                <div class="space-y-2 text-xs max-h-[65vh] overflow-y-auto pr-1">
                     <div>
                         <label class="block text-zinc-400 mb-1">URL Web App Google Script:</label>
                         <input type="text" id="setting-script-url" placeholder="Tempel URL Web App..." class="w-full bg-zinc-950 border border-zinc-700 rounded-xl px-3 py-2 text-white text-[11px]">
@@ -153,9 +225,25 @@
                         <label class="block text-zinc-400 mb-1">Nama Usaha Laundry:</label>
                         <input type="text" id="setting-laundry-name" class="w-full bg-zinc-950 border border-zinc-700 rounded-xl px-3 py-2 text-white">
                     </div>
+                    <div>
+                        <label class="block text-zinc-400 mb-1">Alamat Usaha:</label>
+                        <input type="text" id="setting-address" placeholder="Cth: Jl. Merdeka No. 10" class="w-full bg-zinc-950 border border-zinc-700 rounded-xl px-3 py-2 text-white">
+                    </div>
+                    <div>
+                        <label class="block text-zinc-400 mb-1">No. Telepon / HP Usaha:</label>
+                        <input type="text" id="setting-phone" placeholder="Cth: 08123456789" class="w-full bg-zinc-950 border border-zinc-700 rounded-xl px-3 py-2 text-white">
+                    </div>
+                    <div>
+                        <label class="block text-zinc-400 mb-1">Pesan Footer Nota:</label>
+                        <input type="text" id="setting-footer" placeholder="Cth: Terima kasih atas kepercayaan Anda" class="w-full bg-zinc-950 border border-zinc-700 rounded-xl px-3 py-2 text-white">
+                    </div>
+                    <div>
+                        <label class="block text-zinc-400 mb-1">Estimasi Laba Bersih (% dari Pendapatan):</label>
+                        <input type="number" id="setting-profit-margin" value="40" class="w-full bg-zinc-950 border border-zinc-700 rounded-xl px-3 py-2 text-white">
+                    </div>
                 </div>
-                <div class="flex gap-2 pt-2 border-t border-zinc-800">
-                    <button onclick="saveSettings()" class="w-full py-2.5 bg-sky-700 hover:bg-sky-600 font-semibold rounded-xl transition">Simpan</button>
+                <div class="pt-2 border-t border-zinc-800">
+                    <button onclick="saveSettings()" class="w-full py-2.5 bg-sky-700 hover:bg-sky-600 font-semibold text-xs rounded-xl transition">Simpan Pengaturan</button>
                 </div>
             </div>
         </div>
@@ -165,20 +253,28 @@
     <!-- JAVASCRIPT -->
     <script>
         let currentTab = 'kasir';
-        let appData = { transaksi: [] };
+        let appData = { transaksi: [], pengeluaran: [] };
+        let activeReceiptData = null;
 
         window.addEventListener('DOMContentLoaded', () => {
-            const savedName = localStorage.getItem('laundry_name') || 'Laundry Express';
-            document.getElementById('header-laundry-name').innerText = savedName;
-            
+            loadSettingsToUI();
             checkConnectionStatus();
-            window.addEventListener('online', handleOnline);
-            window.addEventListener('offline', handleOffline);
+            window.addEventListener('online', () => { checkConnectionStatus(); syncOfflineQueue(); });
+            window.addEventListener('offline', checkConnectionStatus);
 
             calculateTotal();
             loadLocalCacheOrFetch();
             switchTab('kasir');
         });
+
+        function loadSettingsToUI() {
+            const name = localStorage.getItem('laundry_name') || 'Laundry Express';
+            document.getElementById('header-laundry-name').innerText = name;
+            document.getElementById('receipt-store').innerText = name;
+            document.getElementById('receipt-address').innerText = localStorage.getItem('laundry_address') || 'Alamat Usaha Anda';
+            document.getElementById('receipt-phone').innerText = 'Telp: ' + (localStorage.getItem('laundry_phone') || '-');
+            document.getElementById('receipt-footer').innerText = localStorage.getItem('laundry_footer') || 'Terima Kasih Telah Menggunakan Jasa Kami';
+        }
 
         function checkConnectionStatus() {
             const badge = document.getElementById('connection-badge');
@@ -189,15 +285,6 @@
                 badge.className = "text-[10px] px-2.5 py-1 rounded-full font-semibold bg-rose-950 text-rose-400 border border-rose-500/30";
                 badge.innerText = "🔴 Offline";
             }
-        }
-
-        function handleOnline() {
-            checkConnectionStatus();
-            syncOfflineQueue();
-        }
-
-        function handleOffline() {
-            checkConnectionStatus();
         }
 
         function showSync(text) {
@@ -251,15 +338,10 @@
                 return;
             }
 
-            // Jika offline, simpan ke antrean lokal HP
             if (!navigator.onLine) {
                 saveToOfflineQueue(payload);
-                
-                // Update data lokal secara instan agar langsung nampak di list pesanan
                 applyLocalOptimisticUpdate(payload);
-                
-                alert("📴 Tidak ada sinyal! Pesanan disimpan sementara di HP. Akan otomatis disinkronkan saat online.");
-                switchTab('pesanan');
+                alert("📴 Offline! Data disimpan sementara di HP.");
                 return;
             }
 
@@ -274,11 +356,9 @@
                 if(successMsg) alert(successMsg);
                 await fetchAllData();
             } catch (err) {
-                console.error("Gagal terhubung, menyimpan ke offline queue:", err);
                 saveToOfflineQueue(payload);
                 applyLocalOptimisticUpdate(payload);
-                alert("⚠️ Koneksi terganggu. Data disimpan secara offline di HP.");
-                switchTab('pesanan');
+                alert("⚠️ Koneksi terganggu. Disimpan secara offline.");
             } finally {
                 hideSync();
             }
@@ -293,55 +373,32 @@
         async function syncOfflineQueue() {
             let queue = JSON.parse(localStorage.getItem('laundry_offline_queue') || '[]');
             if (queue.length === 0) return;
-
             const url = getScriptUrl();
             if (!url) return;
 
-            showSync(`Menyinkronkan ${queue.length} data offline...`);
+            showSync(`Sinkronisasi ${queue.length} data...`);
             try {
                 for (let payload of queue) {
-                    await fetch(url, {
-                        method: 'POST',
-                        mode: 'no-cors',
-                        headers: { 'Content-Type': 'text/plain' },
-                        body: JSON.stringify(payload)
-                    });
+                    await fetch(url, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(payload) });
                 }
                 localStorage.removeItem('laundry_offline_queue');
                 await fetchAllData();
-                console.log("Sinkronisasi offline berhasil!");
-            } catch (err) {
-                console.error("Gagal sinkronisasi offline:", err);
-            } finally {
-                hideSync();
-            }
+            } catch (err) {} finally { hideSync(); }
         }
 
         function applyLocalOptimisticUpdate(payload) {
             if (!appData.transaksi) appData.transaksi = [];
-            
+            if (!appData.pengeluaran) appData.pengeluaran = [];
+
             if (payload.action === 'addOrder') {
-                appData.transaksi.push([
-                    payload.id,
-                    payload.customerName,
-                    payload.service,
-                    payload.qty,
-                    payload.total,
-                    payload.payStatus,
-                    payload.laundryStatus,
-                    payload.date
-                ]);
+                appData.transaksi.push([payload.id, payload.customerName, payload.service, payload.qty, payload.total, payload.payStatus, payload.laundryStatus, payload.date, payload.phone]);
+            } else if (payload.action === 'addExpense') {
+                appData.pengeluaran.push([payload.id, payload.keterangan, payload.jumlah, payload.tanggal]);
             } else if (payload.action === 'updateStatus') {
-                for (let row of appData.transaksi) {
-                    if (row[0] == payload.id) {
-                        row[6] = payload.newStatus;
-                        break;
-                    }
-                }
+                for (let row of appData.transaksi) { if (row[0] == payload.id) { row[6] = payload.newStatus; break; } }
             } else if (payload.action === 'deleteOrder') {
                 appData.transaksi = appData.transaksi.filter(row => row[0] != payload.id);
             }
-            
             localStorage.setItem('laundry_cache_data', JSON.stringify(appData));
             refreshUI();
         }
@@ -372,11 +429,24 @@
             const qty = parseFloat(document.getElementById('order-qty').value) || 1;
             const total = price * qty;
             document.getElementById('order-total-preview').innerText = formatRupiah(total);
+            document.getElementById('order-cash').value = total;
+            calculateChange();
+        }
+
+        function calculateChange() {
+            const select = document.getElementById('order-service');
+            const price = parseFloat(select.options[select.selectedIndex].getAttribute('data-price')) || 0;
+            const qty = parseFloat(document.getElementById('order-qty').value) || 1;
+            const total = price * qty;
+            const cash = parseFloat(document.getElementById('order-cash').value) || 0;
+            const change = cash - total;
+            document.getElementById('order-change-preview').innerText = formatRupiah(change >= 0 ? change : 0);
         }
 
         async function addOrder(event) {
             event.preventDefault();
             const customerName = document.getElementById('order-customer').value.trim();
+            const phone = document.getElementById('order-phone').value.trim();
             const serviceSelect = document.getElementById('order-service');
             const service = serviceSelect.value;
             const price = parseFloat(serviceSelect.options[serviceSelect.selectedIndex].getAttribute('data-price'));
@@ -386,12 +456,57 @@
             const laundryStatus = 'Proses Cuci';
             const date = new Date().toLocaleDateString('id-ID') + ' ' + new Date().toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'});
             const id = 'L_' + Date.now();
+            const cash = parseFloat(document.getElementById('order-cash').value) || total;
+            const change = cash - total;
 
             document.getElementById('order-customer').value = '';
+            document.getElementById('order-phone').value = '';
             document.getElementById('order-qty').value = '1';
 
-            await sendPostData({ action: 'addOrder', id, customerName, service, qty, total, payStatus, laundryStatus, date }, 'Pesanan berhasil dicatat!');
+            await sendPostData({ action: 'addOrder', id, customerName, service, qty, total, payStatus, laundryStatus, date, phone }, 'Pesanan dicatat!');
+            
+            // Buka Modal Preview Nota
+            openReceiptModal({ id, date, customerName, service, total, payStatus, change, phone });
             switchTab('pesanan');
+        }
+
+        async function addExpense(event) {
+            event.preventDefault();
+            const keterangan = document.getElementById('exp-desc').value.trim();
+            const jumlah = parseFloat(document.getElementById('exp-amount').value);
+            const tanggal = new Date().toLocaleDateString('id-ID');
+            const id = 'E_' + Date.now();
+
+            document.getElementById('exp-desc').value = '';
+            document.getElementById('exp-amount').value = '';
+
+            await sendPostData({ action: 'addExpense', id, keterangan, jumlah, tanggal }, 'Pengeluaran dicatat!');
+        }
+
+        function openReceiptModal(data) {
+            activeReceiptData = data;
+            document.getElementById('r-id').innerText = data.id;
+            document.getElementById('r-date').innerText = data.date;
+            document.getElementById('r-cust').innerText = data.customerName;
+            document.getElementById('r-serv').innerText = data.service;
+            document.getElementById('r-total').innerText = formatRupiah(data.total);
+            document.getElementById('r-paystatus').innerText = data.payStatus;
+            document.getElementById('r-change').innerText = formatRupiah(data.change || 0);
+            document.getElementById('receipt-modal').classList.remove('hidden');
+        }
+
+        function closeReceiptModal() {
+            document.getElementById('receipt-modal').classList.add('hidden');
+        }
+
+        function sendWhatsAppNote() {
+            if (!activeReceiptData) return;
+            const d = activeReceiptData;
+            const storeName = localStorage.getItem('laundry_name') || 'Laundry Express';
+            const text = `*NOTA RESMI - ${storeName}*\n\nID: ${d.id}\nTgl: ${d.date}\nPelanggan: ${d.customerName}\nLayanan: ${d.service}\nTotal: ${formatRupiah(d.total)}\nStatus: ${d.payStatus}\n\n${localStorage.getItem('laundry_footer') || 'Terima Kasih'}`;
+            let phone = d.phone || '';
+            if (phone.startsWith('0')) phone = '62' + phone.slice(1);
+            window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, '_blank');
         }
 
         async function updateStatus(id, newStatus) {
@@ -399,14 +514,14 @@
         }
 
         async function deleteOrder(id) {
-            if(confirm('Hapus riwayat pesanan ini?')) {
+            if(confirm('Hapus pesanan ini?')) {
                 await sendPostData({ action: 'deleteOrder', id }, 'Pesanan dihapus!');
             }
         }
 
         function refreshUI() {
             renderOrdersList();
-            updateReportStats();
+            updateDashboardStats();
         }
 
         function renderOrdersList() {
@@ -418,19 +533,12 @@
             container.innerHTML = '';
 
             if(orders.length === 0) {
-                container.innerHTML = `<p class="text-xs text-zinc-500 text-center py-4">Belum ada pesanan laundry.</p>`;
+                container.innerHTML = `<p class="text-xs text-zinc-500 text-center py-4">Belum ada pesanan.</p>`;
                 return;
             }
 
             orders.slice().reverse().forEach(row => {
-                const id = row[0];
-                const cust = row[1];
-                const serv = row[2];
-                const qty = row[3];
-                const total = row[4];
-                const pay = row[5];
-                const status = row[6];
-                const date = row[7];
+                const id = row[0], cust = row[1], serv = row[2], qty = row[3], total = row[4], pay = row[5], status = row[6], date = row[7], phone = row[8] || '';
 
                 let statusColor = 'bg-amber-950 text-amber-300 border-amber-500/35';
                 if(status === 'Selesai') statusColor = 'bg-sky-950 text-sky-300 border-sky-500/35';
@@ -450,31 +558,37 @@
                                 <span class="text-zinc-300 block">${serv} (${qty})</span>
                                 <span class="font-mono font-bold text-sky-400">${formatRupiah(total)} • <span class="${pay === 'Lunas' ? 'text-emerald-400' : 'text-rose-400'}">${pay}</span></span>
                             </div>
+                            <button onclick="openReceiptModal({id:'${id}', date:'${date}', customerName:'${cust}', service:'${serv}', total:${total}, payStatus:'${pay}', phone:'${phone}'})" class="px-2.5 py-1 bg-sky-950 text-sky-300 border border-sky-500/30 rounded-lg text-[10px]">📄 Nota</button>
                         </div>
                         <div class="flex gap-1.5 pt-1">
-                            <select onchange="updateStatus('${id}', this.value)" class="bg-zinc-950 border border-zinc-700 text-[10px] text-white rounded-lg px-2 py-1">
+                            <select onchange="updateStatus('${id}', this.value)" class="bg-zinc-950 border border-zinc-700 text-[10px] text-white rounded-lg px-2 py-1 flex-1">
                                 <option value="" disabled selected>Ubah Status...</option>
                                 <option value="Proses Cuci">Proses Cuci</option>
                                 <option value="Selesai">Selesai (Siap Ambil)</option>
                                 <option value="Sudah Diambil">Sudah Diambil</option>
                             </select>
-                            <button onclick="deleteOrder('${id}')" class="px-2 py-1 bg-zinc-800 hover:bg-red-900 text-zinc-400 hover:text-white rounded-lg text-[10px] transition">Hapus</button>
+                            <button onclick="deleteOrder('${id}')" class="px-2.5 py-1 bg-zinc-800 hover:bg-red-900 text-zinc-400 hover:text-white rounded-lg text-[10px]">Hapus</button>
                         </div>
                     </div>
                 `;
             });
         }
 
-        function updateReportStats() {
+        function updateDashboardStats() {
             const orders = appData.transaksi || [];
-            let totalRev = 0;
-            orders.forEach(row => {
-                totalRev += parseFloat(row[4]) || 0;
-            });
+            const expenses = appData.pengeluaran || [];
+            let totalRev = 0, totalExp = 0;
 
-            document.getElementById('lap-total-pendapatan').innerText = formatRupiah(totalRev);
-            document.getElementById('lap-total-order').innerText = orders.length + " Pesanan";
-            document.getElementById('lap-status-bayar').innerText = "Terhitung Cloud";
+            orders.forEach(row => { totalRev += parseFloat(row[4]) || 0; });
+            expenses.forEach(row => { totalExp += parseFloat(row[2]) || 0; });
+
+            const margin = parseFloat(localStorage.getItem('laundry_profit_margin') || 40) / 100;
+            const estimatedProfit = (totalRev * margin) - totalExp;
+
+            document.getElementById('dash-rev').innerText = formatRupiah(totalRev);
+            document.getElementById('dash-profit').innerText = formatRupiah(estimatedProfit);
+            document.getElementById('dash-exp').innerText = formatRupiah(totalExp);
+            document.getElementById('dash-count').innerText = orders.length + " Pesanan";
         }
 
         function toggleSettingsModal() {
@@ -483,16 +597,25 @@
             if(!modal.classList.contains('hidden')) {
                 document.getElementById('setting-script-url').value = localStorage.getItem('laundry_script_url') || '';
                 document.getElementById('setting-laundry-name').value = localStorage.getItem('laundry_name') || 'Laundry Express';
+                document.getElementById('setting-address').value = localStorage.getItem('laundry_address') || '';
+                document.getElementById('setting-phone').value = localStorage.getItem('laundry_phone') || '';
+                document.getElementById('setting-footer').value = localStorage.getItem('laundry_footer') || 'Terima Kasih Telah Menggunakan Jasa Kami';
+                document.getElementById('setting-profit-margin').value = localStorage.getItem('laundry_profit_margin') || '40';
             }
         }
 
         function saveSettings() {
             localStorage.setItem('laundry_script_url', document.getElementById('setting-script-url').value.trim());
             localStorage.setItem('laundry_name', document.getElementById('setting-laundry-name').value.trim());
-            document.getElementById('header-laundry-name').innerText = localStorage.getItem('laundry_name');
+            localStorage.setItem('laundry_address', document.getElementById('setting-address').value.trim());
+            localStorage.setItem('laundry_phone', document.getElementById('setting-phone').value.trim());
+            localStorage.setItem('laundry_footer', document.getElementById('setting-footer').value.trim());
+            localStorage.setItem('laundry_profit_margin', document.getElementById('setting-profit-margin').value.trim());
+            
+            loadSettingsToUI();
             toggleSettingsModal();
             fetchAllData();
-            alert('Pengaturan kasir disimpan!');
+            alert('Pengaturan disimpan!');
         }
     </script>
 </body>
