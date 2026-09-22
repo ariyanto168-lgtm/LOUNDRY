@@ -19,13 +19,17 @@
 </head>
 <body class="antialiased selection:bg-sky-600 selection:text-white">
 
-    <div class="max-w-md mx-auto min-h-screen relative flex flex-col bg-zinc-950 border-x border-zinc-800 shadow-2xl pb-28">
+    <div class="max-w-md mx-auto min-h-screen relative flex flex-col bg-zinc-950 border-x border-zinc-800 shadow-2xl pb-32">
         
-        <!-- HEADER (Tanpa Tombol Pengaturan) -->
+        <!-- HEADER -->
         <header class="p-5 bg-zinc-900/80 backdrop-blur-md border-b border-zinc-800 sticky top-0 z-40 flex justify-between items-center">
             <div>
                 <span class="text-[10px] uppercase tracking-widest text-sky-400 font-bold block">POS Laundry Digital</span>
                 <h1 id="header-laundry-name" class="text-lg font-bold text-white">Laundry Express</h1>
+            </div>
+            <!-- STATUS KONEKSI -->
+            <div id="connection-badge" class="text-[10px] px-2.5 py-1 rounded-full font-semibold bg-emerald-950 text-emerald-400 border border-emerald-500/30">
+                🟢 Online
             </div>
         </header>
 
@@ -105,9 +109,15 @@
                 </div>
             </section>
 
+            <!-- FOOTER INFO & BRANDING -->
+            <footer class="text-center pt-6 pb-2 space-y-1">
+                <p class="text-[10px] text-zinc-500">Kasir Laundry Digital <span id="app-version" class="font-mono text-zinc-400">v1.2.0</span></p>
+                <p class="text-[11px] font-semibold tracking-wider text-sky-500/80">Powered by Ari GPM</p>
+            </footer>
+
         </main>
 
-        <!-- NAVBAR BAWAH (Termasuk Tombol Pengaturan ⚙️) -->
+        <!-- NAVBAR BAWAH -->
         <nav class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-zinc-900/90 backdrop-blur-md border-t border-zinc-800 px-6 py-3 flex justify-between items-center z-40 shadow-2xl">
             <button onclick="switchTab('kasir')" class="nav-btn flex flex-col items-center text-sky-400 transition" data-target="kasir">
                 <span class="text-base">🛒</span>
@@ -160,10 +170,35 @@
         window.addEventListener('DOMContentLoaded', () => {
             const savedName = localStorage.getItem('laundry_name') || 'Laundry Express';
             document.getElementById('header-laundry-name').innerText = savedName;
+            
+            checkConnectionStatus();
+            window.addEventListener('online', handleOnline);
+            window.addEventListener('offline', handleOffline);
+
             calculateTotal();
-            fetchAllData();
+            loadLocalCacheOrFetch();
             switchTab('kasir');
         });
+
+        function checkConnectionStatus() {
+            const badge = document.getElementById('connection-badge');
+            if (navigator.onLine) {
+                badge.className = "text-[10px] px-2.5 py-1 rounded-full font-semibold bg-emerald-950 text-emerald-400 border border-emerald-500/30";
+                badge.innerText = "🟢 Online";
+            } else {
+                badge.className = "text-[10px] px-2.5 py-1 rounded-full font-semibold bg-rose-950 text-rose-400 border border-rose-500/30";
+                badge.innerText = "🔴 Offline";
+            }
+        }
+
+        function handleOnline() {
+            checkConnectionStatus();
+            syncOfflineQueue();
+        }
+
+        function handleOffline() {
+            checkConnectionStatus();
+        }
 
         function showSync(text) {
             const el = document.getElementById('sync-status');
@@ -177,15 +212,29 @@
             return localStorage.getItem('laundry_script_url') || '';
         }
 
+        async function loadLocalCacheOrFetch() {
+            const cached = localStorage.getItem('laundry_cache_data');
+            if (cached) {
+                try {
+                    appData = JSON.parse(cached);
+                    refreshUI();
+                } catch(e) {}
+            }
+            if (navigator.onLine) {
+                await fetchAllData();
+            }
+        }
+
         async function fetchAllData() {
             const url = getScriptUrl();
-            if (!url) return;
+            if (!url || !navigator.onLine) return;
 
-            showSync("Menarik data...");
+            showSync("Menarik data cloud...");
             try {
                 const response = await fetch(`${url}?action=getData`);
                 const result = await response.json();
                 appData = result;
+                localStorage.setItem('laundry_cache_data', JSON.stringify(result));
                 refreshUI();
             } catch (err) {
                 console.error(err);
@@ -202,6 +251,18 @@
                 return;
             }
 
+            // Jika offline, simpan ke antrean lokal HP
+            if (!navigator.onLine) {
+                saveToOfflineQueue(payload);
+                
+                // Update data lokal secara instan agar langsung nampak di list pesanan
+                applyLocalOptimisticUpdate(payload);
+                
+                alert("📴 Tidak ada sinyal! Pesanan disimpan sementara di HP. Akan otomatis disinkronkan saat online.");
+                switchTab('pesanan');
+                return;
+            }
+
             showSync("Menyimpan ke Cloud...");
             try {
                 await fetch(url, {
@@ -213,11 +274,76 @@
                 if(successMsg) alert(successMsg);
                 await fetchAllData();
             } catch (err) {
-                console.error(err);
-                alert("Gagal menyimpan data.");
+                console.error("Gagal terhubung, menyimpan ke offline queue:", err);
+                saveToOfflineQueue(payload);
+                applyLocalOptimisticUpdate(payload);
+                alert("⚠️ Koneksi terganggu. Data disimpan secara offline di HP.");
+                switchTab('pesanan');
             } finally {
                 hideSync();
             }
+        }
+
+        function saveToOfflineQueue(payload) {
+            let queue = JSON.parse(localStorage.getItem('laundry_offline_queue') || '[]');
+            queue.push(payload);
+            localStorage.setItem('laundry_offline_queue', JSON.stringify(queue));
+        }
+
+        async function syncOfflineQueue() {
+            let queue = JSON.parse(localStorage.getItem('laundry_offline_queue') || '[]');
+            if (queue.length === 0) return;
+
+            const url = getScriptUrl();
+            if (!url) return;
+
+            showSync(`Menyinkronkan ${queue.length} data offline...`);
+            try {
+                for (let payload of queue) {
+                    await fetch(url, {
+                        method: 'POST',
+                        mode: 'no-cors',
+                        headers: { 'Content-Type': 'text/plain' },
+                        body: JSON.stringify(payload)
+                    });
+                }
+                localStorage.removeItem('laundry_offline_queue');
+                await fetchAllData();
+                console.log("Sinkronisasi offline berhasil!");
+            } catch (err) {
+                console.error("Gagal sinkronisasi offline:", err);
+            } finally {
+                hideSync();
+            }
+        }
+
+        function applyLocalOptimisticUpdate(payload) {
+            if (!appData.transaksi) appData.transaksi = [];
+            
+            if (payload.action === 'addOrder') {
+                appData.transaksi.push([
+                    payload.id,
+                    payload.customerName,
+                    payload.service,
+                    payload.qty,
+                    payload.total,
+                    payload.payStatus,
+                    payload.laundryStatus,
+                    payload.date
+                ]);
+            } else if (payload.action === 'updateStatus') {
+                for (let row of appData.transaksi) {
+                    if (row[0] == payload.id) {
+                        row[6] = payload.newStatus;
+                        break;
+                    }
+                }
+            } else if (payload.action === 'deleteOrder') {
+                appData.transaksi = appData.transaksi.filter(row => row[0] != payload.id);
+            }
+            
+            localStorage.setItem('laundry_cache_data', JSON.stringify(appData));
+            refreshUI();
         }
 
         function switchTab(tabId) {
