@@ -89,7 +89,7 @@
                         <div>
                             <label class="block text-zinc-400 mb-1">Jenis Layanan & Harga:</label>
                             <select id="order-service" onchange="calculateTotal()" class="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-sky-500">
-                                <!-- Options akan diisi dari JS berdasarkan Pengaturan Layanan -->
+                                <!-- Options akan diisi dari JS -->
                             </select>
                         </div>
                         <div>
@@ -131,7 +131,7 @@
                 <div id="orders-list-container" class="space-y-2"></div>
             </section>
 
-            <!-- TAB 3: LAYANAN (BARU) -->
+            <!-- TAB 3: LAYANAN -->
             <section id="sec-layanan" class="tab-section hidden space-y-4">
                 <div class="bg-zinc-900 p-4 rounded-2xl border border-zinc-800 space-y-3 shadow-lg">
                     <span class="text-xs font-bold text-sky-400 block" id="form-service-title">➕ Tambah Layanan</span>
@@ -162,9 +162,7 @@
 
                 <div class="bg-zinc-900 p-4 rounded-2xl border border-zinc-800 space-y-2">
                     <span class="text-xs font-bold text-zinc-300 block">📋 Daftar Layanan</span>
-                    <div id="services-list-container" class="space-y-2 text-xs">
-                        <!-- Populated by JS -->
-                    </div>
+                    <div id="services-list-container" class="space-y-2 text-xs"></div>
                 </div>
             </section>
 
@@ -189,14 +187,14 @@
 
             <!-- FOOTER BRANDING -->
             <footer class="text-center pt-4 pb-2 space-y-1">
-                <!-- UPDATE VERSI KE v1.8.0 -->
-                <p class="text-[10px] text-zinc-500">POS Laundry Pro <span class="font-mono text-zinc-400">v1.8.0</span></p>
+                <!-- VERSI v1.8.2 -->
+                <p class="text-[10px] text-zinc-500">POS Laundry Pro <span class="font-mono text-zinc-400">v1.8.2</span></p>
                 <p class="text-[11px] font-semibold tracking-wider text-sky-500/80">Powered by Ari GPM</p>
             </footer>
 
         </main>
 
-        <!-- NAVBAR BAWAH (Disempurnakan untuk 5 Menu) -->
+        <!-- NAVBAR BAWAH -->
         <nav class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md bg-zinc-900/90 backdrop-blur-md border-t border-zinc-800 px-3 py-3 flex justify-between items-center z-40 shadow-2xl">
             <button onclick="switchTab('kasir')" class="nav-btn flex flex-col items-center text-sky-400 transition" data-target="kasir">
                 <span class="text-base">🛒</span>
@@ -269,13 +267,10 @@
                     <button onclick="toggleSettingsModal()" class="text-zinc-400 hover:text-white font-bold">✕</button>
                 </div>
                 <div class="space-y-2 text-xs max-h-[65vh] overflow-y-auto pr-1">
-                    
-                    <!-- INPUT SCRIPT URL DISEMBUNYIKAN (class hidden) -->
                     <div class="hidden">
                         <label class="block text-zinc-400 mb-1">URL Web App Google Script:</label>
                         <input type="text" id="setting-script-url" placeholder="Tempel URL Web App..." class="w-full bg-zinc-950 border border-zinc-700 rounded-xl px-3 py-2 text-white text-[11px]">
                     </div>
-                    
                     <div>
                         <label class="block text-zinc-400 mb-1">Nama Usaha Laundry:</label>
                         <input type="text" id="setting-laundry-name" class="w-full bg-zinc-950 border border-zinc-700 rounded-xl px-3 py-2 text-white">
@@ -303,6 +298,31 @@
             </div>
         </div>
 
+        <!-- CUSTOM ALERT MODAL -->
+        <div id="custom-alert-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+            <div class="bg-zinc-900 border border-zinc-800 rounded-3xl p-5 max-w-xs w-full space-y-4 shadow-2xl text-white text-center">
+                <div class="space-y-1">
+                    <h3 class="text-sm font-bold text-sky-400" id="custom-alert-title">Pemberitahuan</h3>
+                    <p id="custom-alert-message" class="text-xs text-zinc-300"></p>
+                </div>
+                <button onclick="closeCustomAlert()" class="w-full py-2 bg-sky-700 hover:bg-sky-600 text-xs font-semibold rounded-xl transition">OK</button>
+            </div>
+        </div>
+
+        <!-- CUSTOM CONFIRM MODAL -->
+        <div id="custom-confirm-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+            <div class="bg-zinc-900 border border-zinc-800 rounded-3xl p-5 max-w-xs w-full space-y-4 shadow-2xl text-white text-center">
+                <div class="space-y-1">
+                    <h3 class="text-sm font-bold text-amber-400">Konfirmasi</h3>
+                    <p id="custom-confirm-message" class="text-xs text-zinc-300"></p>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <button id="btn-confirm-yes" class="py-2 bg-rose-700 hover:bg-rose-600 text-xs font-semibold rounded-xl transition">Ya</button>
+                    <button onclick="closeCustomConfirm(false)" class="py-2 bg-zinc-800 hover:bg-zinc-700 text-xs font-semibold rounded-xl transition">Batal</button>
+                </div>
+            </div>
+        </div>
+
     </div>
 
     <!-- JAVASCRIPT -->
@@ -311,6 +331,36 @@
         let appData = { transaksi: [], pengeluaran: [] };
         let servicesData = [];
         let activeReceiptData = null;
+        let confirmCallback = null;
+
+        // Fungsionalitas Alert & Confirm Kustom Dinamis
+        function showCustomAlert(message, title = "Pemberitahuan") {
+            document.getElementById('custom-alert-title').innerText = title;
+            document.getElementById('custom-alert-message').innerText = message;
+            document.getElementById('custom-alert-modal').classList.remove('hidden');
+        }
+
+        function closeCustomAlert() {
+            document.getElementById('custom-alert-modal').classList.add('hidden');
+        }
+
+        function showCustomConfirm(message, callback) {
+            document.getElementById('custom-confirm-message').innerText = message;
+            confirmCallback = callback;
+            document.getElementById('custom-confirm-modal').classList.remove('hidden');
+        }
+
+        function closeCustomConfirm(result) {
+            document.getElementById('custom-confirm-modal').classList.add('hidden');
+            if (confirmCallback) {
+                confirmCallback(result);
+                confirmCallback = null;
+            }
+        }
+
+        document.getElementById('btn-confirm-yes').addEventListener('click', () => {
+            closeCustomConfirm(true);
+        });
 
         window.addEventListener('DOMContentLoaded', () => {
             loadSettingsToUI();
@@ -323,15 +373,11 @@
             switchTab('kasir');
         });
 
-        // ==========================
-        // FITUR MANAJEMEN LAYANAN
-        // ==========================
         function loadServices() {
             const saved = localStorage.getItem('laundry_services');
             if (saved) {
                 servicesData = JSON.parse(saved);
             } else {
-                // Default fallback jika kosong
                 servicesData = [
                     { id: 'srv_1', name: 'Cuci Kiloan', price: 6000, unit: 'kg' },
                     { id: 'srv_2', name: 'Cuci + Setrika', price: 8000, unit: 'kg' },
@@ -355,7 +401,7 @@
                 const text = `${srv.name} (Rp ${srv.price.toLocaleString('id-ID')} / ${srv.unit})`;
                 select.innerHTML += `<option value="${text}" data-price="${srv.price}">${text}</option>`;
             });
-            calculateTotal(); // Update preview harga jika list berubah
+            calculateTotal();
         }
 
         function renderServicesList() {
@@ -390,12 +436,12 @@
             const price = parseFloat(document.getElementById('srv-price').value);
             const unit = document.getElementById('srv-unit').value;
 
-            if (id) { // Mode Edit
+            if (id) {
                 const index = servicesData.findIndex(s => s.id === id);
                 if (index > -1) {
                     servicesData[index] = { id, name, price, unit };
                 }
-            } else { // Mode Tambah Baru
+            } else {
                 servicesData.push({ id: 'srv_' + Date.now(), name, price, unit });
             }
 
@@ -416,18 +462,18 @@
             document.getElementById('form-service-title').innerText = '✏️ Edit Layanan';
             document.getElementById('btn-save-srv').innerText = 'Update Layanan';
             document.getElementById('btn-cancel-srv').classList.remove('hidden');
-            
-            // Scroll otomatis ke form jika di HP
             document.getElementById('sec-layanan').scrollIntoView({ behavior: 'smooth' });
         }
 
         function deleteService(id) {
-            if (confirm('Yakin ingin menghapus layanan ini?')) {
-                servicesData = servicesData.filter(s => s.id !== id);
-                saveServicesToStorage();
-                renderServicesList();
-                populateServiceDropdown();
-            }
+            showCustomConfirm('Yakin ingin menghapus layanan ini?', (res) => {
+                if (res) {
+                    servicesData = servicesData.filter(s => s.id !== id);
+                    saveServicesToStorage();
+                    renderServicesList();
+                    populateServiceDropdown();
+                }
+            });
         }
 
         function resetServiceForm() {
@@ -440,8 +486,6 @@
             document.getElementById('btn-save-srv').innerText = 'Simpan Layanan';
             document.getElementById('btn-cancel-srv').classList.add('hidden');
         }
-        // ==========================
-
 
         function loadSettingsToUI() {
             const name = localStorage.getItem('laundry_name') || 'Laundry Express';
@@ -509,7 +553,7 @@
         async function sendPostData(payload, successMsg) {
             const url = getScriptUrl();
             if (!url) {
-                alert("URL Web App belum diatur di Pengaturan (⚙️)!");
+                showCustomAlert("URL Web App belum diatur di Pengaturan (⚙️)!");
                 toggleSettingsModal();
                 return;
             }
@@ -517,7 +561,6 @@
             if (!navigator.onLine) {
                 saveToOfflineQueue(payload);
                 applyLocalOptimisticUpdate(payload);
-                alert("📴 Offline! Data disimpan sementara di HP.");
                 return;
             }
 
@@ -529,12 +572,10 @@
                     headers: { 'Content-Type': 'text/plain' },
                     body: JSON.stringify(payload)
                 });
-                if(successMsg) alert(successMsg);
                 await fetchAllData();
             } catch (err) {
                 saveToOfflineQueue(payload);
                 applyLocalOptimisticUpdate(payload);
-                alert("⚠️ Koneksi terganggu. Disimpan secara offline.");
             } finally {
                 hideSync();
             }
@@ -601,7 +642,7 @@
 
         function calculateTotal() {
             const select = document.getElementById('order-service');
-            if(select.options.length === 0) return; // Mencegah error jika list layanan kosong
+            if(select.options.length === 0) return;
             
             const price = parseFloat(select.options[select.selectedIndex].getAttribute('data-price')) || 0;
             const qty = parseFloat(document.getElementById('order-qty').value) || 1;
@@ -632,7 +673,7 @@
             
             const serviceSelect = document.getElementById('order-service');
             if(serviceSelect.options.length === 0) {
-                alert("Harap tambahkan Layanan terlebih dahulu di tab Layanan!");
+                showCustomAlert("Harap tambahkan Layanan terlebih dahulu di tab Layanan!");
                 return;
             }
             
@@ -651,7 +692,7 @@
             document.getElementById('order-phone').value = '';
             document.getElementById('order-qty').value = '1';
 
-            await sendPostData({ action: 'addOrder', id, customerName, service, qty, total, payStatus, laundryStatus, date, phone }, 'Pesanan dicatat!');
+            await sendPostData({ action: 'addOrder', id, customerName, service, qty, total, payStatus, laundryStatus, date, phone });
             
             openReceiptModal({ id, date, customerName, service, total, payStatus, change, phone });
             switchTab('pesanan');
@@ -667,7 +708,7 @@
             document.getElementById('exp-desc').value = '';
             document.getElementById('exp-amount').value = '';
 
-            await sendPostData({ action: 'addExpense', id, keterangan, jumlah, tanggal }, 'Pengeluaran dicatat!');
+            await sendPostData({ action: 'addExpense', id, keterangan, jumlah, tanggal });
         }
 
         function openReceiptModal(data) {
@@ -701,9 +742,11 @@
         }
 
         async function deleteOrder(id) {
-            if(confirm('Hapus pesanan ini?')) {
-                await sendPostData({ action: 'deleteOrder', id }, 'Pesanan dihapus!');
-            }
+            showCustomConfirm('Hapus pesanan ini?', async (res) => {
+                if (res) {
+                    await sendPostData({ action: 'deleteOrder', id });
+                }
+            });
         }
 
         function refreshUI() {
@@ -826,7 +869,7 @@
             loadSettingsToUI();
             toggleSettingsModal();
             fetchAllData();
-            alert('Pengaturan disimpan!');
+            showCustomAlert('Pengaturan disimpan!');
         }
     </script>
 </body>
