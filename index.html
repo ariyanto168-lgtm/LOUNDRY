@@ -21,11 +21,15 @@
         }
         ::-webkit-scrollbar { display: none; }
         
-        /* PENGATURAN CETAK THERMAL AGAR PAS DAN TIDAK BERULANG */
+        /* PENGATURAN CETAK THERMAL AGAR RENTANG 1 HALAMAN SAJA */
         @media print {
             @page {
-                size: 58mm auto; /* Ubah ke 80mm auto jika menggunakan printer 80mm */
+                size: auto;
                 margin: 0mm;
+            }
+            body, html {
+                height: auto;
+                background: white !important;
             }
             body * { visibility: hidden; }
             #print-area, #print-area * { visibility: visible; }
@@ -35,10 +39,15 @@
                 top: 0; 
                 width: 100%; 
                 height: auto; 
+                max-height: 100vh;
+                overflow: hidden;
                 background: white; 
                 color: black; 
                 margin: 0;
-                padding: 5mm;
+                padding: 4mm;
+                page-break-inside: avoid;
+                page-break-after: avoid;
+                page-break-before: avoid;
             }
         }
     </style>
@@ -203,8 +212,8 @@
 
             <!-- FOOTER BRANDING -->
             <footer class="text-center pt-4 pb-2 space-y-1">
-                <!-- VERSI v1.8.4 -->
-                <p class="text-[10px] text-zinc-500">POS Laundry Pro <span class="font-mono text-zinc-400">v1.8.4</span></p>
+                <!-- VERSI v1.8.5 -->
+                <p class="text-[10px] text-zinc-500">POS Laundry Pro <span class="font-mono text-zinc-400">v1.8.5</span></p>
                 <p class="text-[11px] font-semibold tracking-wider text-sky-500/80">Powered by Ari GPM</p>
             </footer>
 
