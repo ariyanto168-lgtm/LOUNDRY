@@ -20,7 +20,13 @@
             user-select: none;
         }
         ::-webkit-scrollbar { display: none; }
+        
+        /* PENGATURAN CETAK THERMAL AGAR PAS DAN TIDAK BERULANG */
         @media print {
+            @page {
+                size: 58mm auto; /* Ubah ke 80mm auto jika menggunakan printer 80mm */
+                margin: 0mm;
+            }
             body * { visibility: hidden; }
             #print-area, #print-area * { visibility: visible; }
             #print-area { 
@@ -31,6 +37,8 @@
                 height: auto; 
                 background: white; 
                 color: black; 
+                margin: 0;
+                padding: 5mm;
             }
         }
     </style>
@@ -195,8 +203,8 @@
 
             <!-- FOOTER BRANDING -->
             <footer class="text-center pt-4 pb-2 space-y-1">
-                <!-- VERSI v1.8.3 -->
-                <p class="text-[10px] text-zinc-500">POS Laundry Pro <span class="font-mono text-zinc-400">v1.8.3</span></p>
+                <!-- VERSI v1.8.4 -->
+                <p class="text-[10px] text-zinc-500">POS Laundry Pro <span class="font-mono text-zinc-400">v1.8.4</span></p>
                 <p class="text-[11px] font-semibold tracking-wider text-sky-500/80">Powered by Ari GPM</p>
             </footer>
 
@@ -234,7 +242,7 @@
                     <button onclick="closeReceiptModal()" class="text-zinc-400 hover:text-white font-bold">✕</button>
                 </div>
                 
-                <!-- PRINT AREA DINAMIS MENGIKUTI KONTEN -->
+                <!-- PRINT AREA -->
                 <div id="print-area" class="bg-white text-zinc-900 p-4 rounded-xl text-[11px] font-mono space-y-2 shadow-inner h-auto">
                     <div class="text-center border-b border-dashed border-zinc-400 pb-2">
                         <p id="receipt-store" class="font-bold text-sm">Laundry Express</p>
