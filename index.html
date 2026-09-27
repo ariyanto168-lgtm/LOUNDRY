@@ -230,10 +230,13 @@
                     <button onclick="toggleSettingsModal()" class="text-zinc-400 hover:text-white font-bold">✕</button>
                 </div>
                 <div class="space-y-2 text-xs max-h-[65vh] overflow-y-auto pr-1">
-                    <div>
+                    
+                    <!-- DITAMBAHKAN CLASS hidden DI SINI -->
+                    <div class="hidden">
                         <label class="block text-zinc-400 mb-1">URL Web App Google Script:</label>
                         <input type="text" id="setting-script-url" placeholder="Tempel URL Web App..." class="w-full bg-zinc-950 border border-zinc-700 rounded-xl px-3 py-2 text-white text-[11px]">
                     </div>
+                    
                     <div>
                         <label class="block text-zinc-400 mb-1">Nama Usaha Laundry:</label>
                         <input type="text" id="setting-laundry-name" class="w-full bg-zinc-950 border border-zinc-700 rounded-xl px-3 py-2 text-white">
