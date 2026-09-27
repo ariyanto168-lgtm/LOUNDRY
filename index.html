@@ -23,7 +23,15 @@
         @media print {
             body * { visibility: hidden; }
             #print-area, #print-area * { visibility: visible; }
-            #print-area { position: absolute; left: 0; top: 0; width: 100%; background: white; color: black; }
+            #print-area { 
+                position: absolute; 
+                left: 0; 
+                top: 0; 
+                width: 100%; 
+                height: auto; 
+                background: white; 
+                color: black; 
+            }
         }
     </style>
 </head>
@@ -187,8 +195,8 @@
 
             <!-- FOOTER BRANDING -->
             <footer class="text-center pt-4 pb-2 space-y-1">
-                <!-- VERSI v1.8.2 -->
-                <p class="text-[10px] text-zinc-500">POS Laundry Pro <span class="font-mono text-zinc-400">v1.8.2</span></p>
+                <!-- VERSI v1.8.3 -->
+                <p class="text-[10px] text-zinc-500">POS Laundry Pro <span class="font-mono text-zinc-400">v1.8.3</span></p>
                 <p class="text-[11px] font-semibold tracking-wider text-sky-500/80">Powered by Ari GPM</p>
             </footer>
 
@@ -226,7 +234,8 @@
                     <button onclick="closeReceiptModal()" class="text-zinc-400 hover:text-white font-bold">✕</button>
                 </div>
                 
-                <div id="print-area" class="bg-white text-zinc-900 p-4 rounded-xl text-[11px] font-mono space-y-2 shadow-inner">
+                <!-- PRINT AREA DINAMIS MENGIKUTI KONTEN -->
+                <div id="print-area" class="bg-white text-zinc-900 p-4 rounded-xl text-[11px] font-mono space-y-2 shadow-inner h-auto">
                     <div class="text-center border-b border-dashed border-zinc-400 pb-2">
                         <p id="receipt-store" class="font-bold text-sm">Laundry Express</p>
                         <p id="receipt-address" class="text-[10px] text-zinc-600">Alamat Usaha Anda</p>
@@ -333,7 +342,6 @@
         let activeReceiptData = null;
         let confirmCallback = null;
 
-        // Fungsionalitas Alert & Confirm Kustom Dinamis
         function showCustomAlert(message, title = "Pemberitahuan") {
             document.getElementById('custom-alert-title').innerText = title;
             document.getElementById('custom-alert-message').innerText = message;
